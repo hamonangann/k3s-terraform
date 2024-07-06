@@ -22,15 +22,22 @@ k3sup install --ip $MASTER_IP --context k3s --ssh-key ~/.ssh/google_compute_engi
 # Instalasi worker node
 WORKER_1_IP=$(gcloud compute instances describe gce-worker-node-1 | grep -oP "natIP: \K.*")
 k3sup join --ip $WORKER_1_IP --server-ip $MASTER_IP --ssh-key ~/.ssh/google_compute_engine --user $(whoami)
+
 WORKER_2_IP=$(gcloud compute instances describe gce-worker-node-2 | grep -oP "natIP: \K.*")
 k3sup join --ip $WORKER_2_IP --server-ip $MASTER_IP --ssh-key ~/.ssh/google_compute_engine --user $(whoami)
 
 # Dapatkan kredensial klaster untuk kubectl
 export KUBECONFIG=`pwd`/kubeconfig
 
-# Salin kredensial klaster ke client
+# Salin kredensial klaster
 gcloud compute scp kubeconfig $(whoami)@client:/tmp
 gcloud compute ssh client --command='sudo sh -c "echo export KUBECONFIG=/tmp/kubeconfig >> /etc/profile"'
+
+gcloud compute scp kubeconfig $(whoami)@gce-master-node:/tmp
+gcloud compute ssh gce-master-node --command='sudo sh -c "echo export KUBECONFIG=/tmp/kubeconfig >> /etc/profile"'
+
+gcloud compute scp kubeconfig $(whoami)@gce-worker-node-1:/tmp
+gcloud compute scp kubeconfig $(whoami)@gce-worker-node-2:/tmp
 
 # Mencegah pod dideploy ke master node
 kubectl taint node $(kubectl get nodes | grep "master" | awk '{print $1}') node-role.kubernetes.io/master:NoSchedule
