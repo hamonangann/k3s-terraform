@@ -1,5 +1,5 @@
 sudo apt update
-sudo apt install nfs-kernel-server
+sudo apt install -y nfs-kernel-server
 
 sudo mkdir /nfsdata -p
 
